@@ -29,7 +29,9 @@ if TYPE_CHECKING:
 CLI_CONFIG_KEY = "config"
 
 
-def execute_code_location_command(path: Path, cmd: Sequence[str], dg_context: "DgContext") -> str:
+def execute_code_location_command(
+    path: Path, cmd: Sequence[str], dg_context: "DgContext", capture_stdout: bool = True
+) -> str:
     if dg_context.config.use_dg_managed_environment:
         code_location_command_prefix = ["uv", "run", "dagster-components"]
         env = get_uv_command_env()
@@ -46,7 +48,12 @@ def execute_code_location_command(path: Path, cmd: Sequence[str], dg_context: "D
         *cmd,
     ]
     with pushd(path):
-        result = subprocess.run(full_cmd, stdout=subprocess.PIPE, env=env, check=True)
+        result = subprocess.run(
+            full_cmd, stdout=subprocess.PIPE if capture_stdout else None, env=env, check=True
+        )
+        if not capture_stdout:
+            return ""
+
         return result.stdout.decode("utf-8")
 
 
